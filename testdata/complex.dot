@@ -1,0 +1,29 @@
+digraph auth {
+  rankdir=LR;
+  
+  node [shape = circle];
+  initial [shape = point ];
+
+  // Our actual states
+  offline
+  unauthenticated
+  authenticating
+  authenticated
+  refreshing
+
+  // Set your 'initial' state using the 'initial' transition.
+  // The source node is ignored for this special transition.
+  initial -> unauthenticated [label = "initial"]
+
+  // Our transitions
+  unauthenticated -> authenticating [label="login"]
+  authenticating -> authenticated [label="login_success"]
+  authenticating -> unauthenticated [label="login_failed"]
+  authenticated -> refreshing [label = "timer_expired"]
+  refreshing -> authenticated [label = "session_refreshed"]
+  refreshing -> unauthenticated [label = "session_expired"]
+
+  { authenticating refreshing } -> offline [label = "unreachable"]
+  offline -> unauthenticated [label = "reachable"]
+
+}
