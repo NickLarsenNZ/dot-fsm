@@ -16,14 +16,15 @@ func TestCreateTransition(t *testing.T) {
 
 	actualTransitions := len(machine.Transitions())
 	if expectedTransitions != actualTransitions {
-		t.Fatalf("expected only %d transition(s), got %d transition(s)", expectedTransitions, actualTransitions)
+		t.Fatalf("expected %d transition(s), got %d transition(s)", expectedTransitions, actualTransitions)
 	}
 }
 
-// If transition name exists, and from/to states differ from the original, error
-func TestSameNameTransition(t *testing.T) {
+func TestTransitionWithDifferentDestination(t *testing.T) {
 	machine := fsm.NewFsm()
 
+	// a -> b
+	// c -> d
 	err1 := machine.CreateTransition("t1", "a", "b")
 	err2 := machine.CreateTransition("t1", "c", "d")
 
@@ -36,11 +37,30 @@ func TestSameNameTransition(t *testing.T) {
 	}
 }
 
-// If transition name exists, and from/to states match the original transition, no error (log warning: duplicate transition)
+func TestTransitionWithSameDestination(t *testing.T) {
+	machine := fsm.NewFsm()
+	expectedTransitions := 2
+
+	// {a b} -> c
+	err1 := machine.CreateTransition("t1", "a", "c")
+	err2 := machine.CreateTransition("t1", "b", "c")
+
+	if err1 != nil || err2 != nil {
+		t.Fatalf("unexpected error creating transitions")
+	}
+
+	actualTransitions := len(machine.Transitions())
+	if expectedTransitions != actualTransitions {
+		t.Fatalf("expected %d transition(s), got %d transition(s)", expectedTransitions, actualTransitions)
+	}
+}
+
 func TestDuplicateTransition(t *testing.T) {
 	machine := fsm.NewFsm()
 	expectedTransitions := 1
 
+	// a -> b
+	// a -> b
 	err1 := machine.CreateTransition("t1", "a", "b")
 	err2 := machine.CreateTransition("t1", "a", "b")
 
@@ -50,6 +70,6 @@ func TestDuplicateTransition(t *testing.T) {
 
 	actualTransitions := len(machine.Transitions())
 	if expectedTransitions != actualTransitions {
-		t.Fatalf("expected only %d transition(s), got %d transition(s)", expectedTransitions, actualTransitions)
+		t.Fatalf("expected %d transition(s), got %d transition(s)", expectedTransitions, actualTransitions)
 	}
 }
