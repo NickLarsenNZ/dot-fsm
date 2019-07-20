@@ -1,4 +1,4 @@
-package playground
+package main
 
 import (
 	"fmt"
@@ -6,6 +6,36 @@ import (
 	"gonum.org/v1/gonum/graph/formats/dot/ast"
 	"strings"
 )
+
+type FsmDefinition struct {
+	Transitions []Transition
+	States      StateSet
+}
+
+type Transition struct {
+	Name string
+	From *State
+	To   *State
+}
+
+type State struct {
+	Name          string
+	PreviousState *State
+}
+
+type StateSet map[*State]bool
+
+func (s StateSet) Add(state *State) {
+	s[state] = true
+}
+
+func (s StateSet) List() []*State {
+	var list []*State
+	for k, _ := range s {
+		list = append(list, k)
+	}
+	return list
+}
 
 type States map[string]bool
 type Transitions map[string]bool
@@ -35,7 +65,7 @@ func (t Transitions) List() []string {
 }
 
 func main() {
-	dot, err := dot.ParseFile("complex.dot")
+	dot, err := dot.ParseFile("./testdata/complex.dot")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -149,5 +179,5 @@ func main() {
 	}
 
 	fmt.Println("States:", states.List())
-	fmt.Println("Transitions:", transitions.List())
+	fmt.Println("transitions:", transitions.List())
 }
