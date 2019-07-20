@@ -9,7 +9,8 @@ type Fsm interface {
 	Transitions() []Transition
 	CreateTransition(name string, from string, to string) error
 	TransitionNameExists(name string) bool
-	TransitionWithStatesExists(lookup Transition) bool
+	TransitionExists(lookup Transition) bool
+	TransitionExistsWithDestination(name string, destination string) bool
 	//get
 }
 
@@ -32,14 +33,14 @@ func (f *fsm) CreateTransition(name string, from string, to string) error {
 	}
 
 	// Is it an exact duplicate
-	if f.TransitionWithStatesExists(transition) {
+	if f.TransitionExists(transition) {
 		fmt.Printf("warning: a duplicate transition '%s' has been declared\n", name)
 		return nil
 	}
 
-	// Is the transition name already used
-	if f.TransitionNameExists(name) {
-		return fmt.Errorf("the transition '%s' already exists with different from and to states", name)
+	// Is the transition name already used, and if so, are we trying to create a transition with a different destination?
+	if f.TransitionNameExists(name) && f.TransitionExistsWithDestination(name, to) {
+		return fmt.Errorf("the transition '%s' already exists with a different destination state", name)
 	}
 
 	f.transitions = append(f.transitions, transition)
@@ -57,9 +58,19 @@ func (f fsm) TransitionNameExists(name string) bool {
 	return false
 }
 
-func (f fsm) TransitionWithStatesExists(lookup Transition) bool {
+func (f fsm) TransitionExists(lookup Transition) bool {
 	for _, existing := range f.transitions {
 		if cmp.Equal(&existing, &lookup) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (f fsm) TransitionExistsWithDestination(name string, destination string) bool {
+	for _, t := range f.transitions {
+		if t.Name == name && t.To != destination {
 			return true
 		}
 	}
