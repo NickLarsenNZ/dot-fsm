@@ -39,7 +39,8 @@ func TestTransitionWithDifferentDestination(t *testing.T) {
 
 func TestTransitionWithSameDestination(t *testing.T) {
 	machine := fsm.NewFsm()
-	expectedTransitions := 2
+	expectedTransitions := 1
+	expectedTransitionSources := 2
 
 	// {a b} -> c
 	err1 := machine.CreateTransition("t1", "a", "c")
@@ -52,6 +53,12 @@ func TestTransitionWithSameDestination(t *testing.T) {
 	actualTransitions := len(machine.Transitions())
 	if expectedTransitions != actualTransitions {
 		t.Fatalf("expected %d transition(s), got %d transition(s)", expectedTransitions, actualTransitions)
+	}
+
+	fromStates := machine.Transitions()[0].From
+	actualTransitionSources := len(fromStates)
+	if expectedTransitionSources != actualTransitionSources {
+		t.Fatalf("expected %d from state(s), got %d from state(s)", expectedTransitionSources, actualTransitionSources)
 	}
 }
 

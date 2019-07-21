@@ -10,7 +10,7 @@ import (
 func TestTemplateRender(t *testing.T) {
 	template := `
 {{range .Transitions -}}
-{{.Name}}
+{{.Description}}
 {{end -}}
 `
 	expected := `
