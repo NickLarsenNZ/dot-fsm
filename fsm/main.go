@@ -1,77 +1,105 @@
 package fsm
 
-import "fmt"
-import "github.com/google/go-cmp/cmp"
+import (
+	"fmt"
+	"github.com/nicklarsennz/dot-fsm/utils"
+)
 
 type Fsm interface {
 	//InitialState() string
 	//SetInitialState()
-	Transitions() []Transition
+	Transitions() []*Transition
 	CreateTransition(name string, from string, to string) error
-	TransitionNameExists(name string) bool
-	TransitionExists(lookup Transition) bool
-	TransitionExistsWithDestination(name string, destination string) bool
-	//get
+	TransitionExists(name string, from string, to string) bool
+	FindTransitionById(id string) *Transition
+	FindStateById(id string) *State
 }
 
 type fsm struct {
-	transitions  []Transition
+	transitions  []*Transition
 	initialState string
 	//states       StateSet
 }
 
-func (f fsm) Transitions() []Transition {
+func (f fsm) Transitions() []*Transition {
 	return f.transitions
 }
 
 func (f *fsm) CreateTransition(name string, from string, to string) error {
+	var fromState, toState *State
 
-	transition := Transition{
-		Name: name,
-		From: from,
-		To:   to,
+	// Lookup or create new From state
+	fromState = f.FindStateById(utils.TextToIdentifier(from))
+	if fromState == nil {
+		fromState = &State{
+			ID:          utils.TextToIdentifier(from),
+			Description: from,
+		}
 	}
 
-	// Is it an exact duplicate
-	if f.TransitionExists(transition) {
-		fmt.Printf("warning: a duplicate transition '%s' has been declared\n", name)
+	// Lookup or create new To state
+	toState = f.FindStateById(utils.TextToIdentifier(to))
+	if toState == nil {
+		toState = &State{
+			ID:          utils.TextToIdentifier(to),
+			Description: to,
+		}
+	}
+
+	// Lookup or create new Transition
+	transition := f.FindTransitionById(utils.TextToIdentifier(name))
+	if transition == nil {
+		transition := NewTransition(name, []*State{fromState}, toState)
+		f.transitions = append(f.transitions, transition)
+
 		return nil
 	}
 
-	// Is the transition name already used, and if so, are we trying to create a transition with a different destination?
-	if f.TransitionNameExists(name) && f.TransitionExistsWithDestination(name, to) {
-		return fmt.Errorf("the transition '%s' already exists with a different destination state", name)
+	// Ensure the transition has the same To as "to", otherwise it is invalid
+	if transition.To.ID == utils.TextToIdentifier(to) {
+		// skip if the same transition has been defined
+		if f.TransitionExists(name, from, to) {
+			fmt.Printf("warning: the transition '%s' from '%s' to '%s' has already been declared\n", name, from, to)
+		} else {
+			transition.AddFromState(fromState)
+		}
+	} else {
+		return fmt.Errorf("unable to add the transition '%s' to the state '%s', because the transition already exists to state '%s'", name, to, transition.To.Description)
 	}
-
-	f.transitions = append(f.transitions, transition)
 
 	return nil
 }
 
-func (f fsm) TransitionNameExists(name string) bool {
-	for _, t := range f.transitions {
-		if t.Name == name {
-			return true
+func (f fsm) FindTransitionById(id string) *Transition {
+	for _, transition := range f.transitions {
+		if transition.ID == id {
+			return transition
 		}
 	}
-
-	return false
+	return nil
 }
 
-func (f fsm) TransitionExists(lookup Transition) bool {
-	for _, existing := range f.transitions {
-		if cmp.Equal(&existing, &lookup) {
-			return true
+func (f fsm) FindStateById(id string) *State {
+	for _, transition := range f.transitions {
+		for _, state := range transition.States() {
+			if state.ID == id {
+				return state
+			}
 		}
 	}
-
-	return false
+	return nil
 }
 
-func (f fsm) TransitionExistsWithDestination(name string, destination string) bool {
-	for _, t := range f.transitions {
-		if t.Name == name && t.To != destination {
-			return true
+func (f fsm) TransitionExists(name string, from string, to string) bool {
+	for _, transition := range f.transitions {
+		if transition.ID == utils.TextToIdentifier(name) {
+			if transition.To.ID == utils.TextToIdentifier(to) {
+				for _, state := range transition.From {
+					if state.ID == utils.TextToIdentifier(from) {
+						return true
+					}
+				}
+			}
 		}
 	}
 
