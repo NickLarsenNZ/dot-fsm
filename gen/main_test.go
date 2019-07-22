@@ -19,12 +19,12 @@ t2
 `
 	templateData := struct {
 		Transitions []struct {
-			Name string
+			Description string
 		}
 	}{
-		Transitions: []struct{ Name string }{
-			{Name: "t1"},
-			{Name: "t2"},
+		Transitions: []struct{ Description string }{
+			{Description: "t1"},
+			{Description: "t2"},
 		},
 	}
 
