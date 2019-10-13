@@ -1,9 +1,15 @@
 digraph myFSM {
+  A
+  B
+  C
+  D
+  E
 
-  A -> {B C}
+  A -> B
+  A -> C
   B -> D
-  C -> {A D}
+  C -> D
   D -> E
-  E -> {B C}
+  C -> A
 
 }
