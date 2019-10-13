@@ -20,8 +20,10 @@ var transitions = []fsm.EventDesc{
 
 func Fsm(callbacks fsm.Callbacks) *fsm.FSM {
 	return fsm.NewFSM(
+	    {{- if .InitialState }}
 		state.{{.InitialState}}, // Initial State
+		{{- end }}
 		transitions,
-		callbacks,
+        callbacks,
 	)
 }
