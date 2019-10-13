@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"text/template"
 )
@@ -32,9 +33,22 @@ func (r renderer) Render(buffer io.Writer) error {
 		return t.Execute(buffer, &r.data)
 	} else {
 		// Otherwise we need to render, then pipe the output through the commands in the list
-		rc, wc, _ := pipe.Commands(
+		for _, cmd := range r.commandPipeline {
+			cmd.Stderr = os.Stderr
+		}
+		rc, wc, errCh := pipe.Commands(
 			r.commandPipeline...,
 		)
+
+		go func() {
+			select {
+			case err, ok := <-errCh:
+				if ok && err != nil {
+					os.Exit(2)
+				}
+			}
+		}()
+
 		err := t.Execute(wc, &r.data)
 		if err != nil {
 			return err
